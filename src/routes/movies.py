@@ -1,6 +1,6 @@
 from math import ceil
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Request
 
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -13,6 +13,7 @@ router = APIRouter()
 
 @router.get("/movies/", response_model=MovieListResponseSchema)
 async def get_movie(
+    request: Request,
     page: int = Query(1, ge=1, description="Page number (>= 1)"),
     per_page: int = Query(10, ge=1, le=20, description="Items per page (1–20)"),
     db: AsyncSession = Depends(get_db),
@@ -41,8 +42,10 @@ async def get_movie(
 
     # Calculate pagination
     total_pages = ceil(total_items / per_page)
-    prev_page = page - 1 if page > 1 else None
-    next_page = page + 1 if page < total_pages else None
+
+    base_url = str(request.url).split("?")[0]  # /movies/
+    prev_page = f"{base_url}?page={page - 1}&per_page={per_page}" if page > 1 else None
+    next_page = f"{base_url}?page={page + 1}&per_page={per_page}" if page < total_pages else None
 
     # Return wrapped response
     return MovieListResponseSchema(
@@ -56,7 +59,7 @@ async def get_movie(
 
 
 @router.get("/movies/{movie_id}/", response_model=MovieDetailResponseSchema)
-async def get_movie(movie_id: int, db: AsyncSession = Depends(get_db)):
+async def get_movie_details(movie_id: int, db: AsyncSession = Depends(get_db)):
     movie = await db.get(MovieModel, movie_id)
 
     if movie is None:

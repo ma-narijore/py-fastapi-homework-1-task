@@ -31,8 +31,8 @@ class MovieListResponseSchema(BaseModel):
     Schema for a paginated list of movies.
     """
     movies: List[MovieDetailResponseSchema]
-    prev_page: Optional[int] = None
-    next_page: Optional[int] = None
+    prev_page: Optional[str] = None
+    next_page: Optional[str] = None
     total_pages: int
     total_items: int
 
